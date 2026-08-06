@@ -1,0 +1,12 @@
+.legiscan_key
+*.key
+.env
+
+__pycache__/
+*.pyc
+.DS_Store
+
+# Raw CES microdata — 129-244MB each, redistributed from Harvard Dataverse under their
+# terms. Download separately; analyze_ces.py and analyze_ces_multiyear.py expect them here.
+*.csv
+ces*.tab
