@@ -1,4 +1,4 @@
-# Defund War Room — Executive Agent Report
+# Reproductive Access Intelligence — Executive Agent Report
 
 *Session date: 2026-08-04. Scope: market assessment + a round of build-and-measure experiments on the early-warning tool. Builds on the validated model (`warroom_model.py`, backtest AUC 0.99) and the v0 live tracker. Everything here is runnable and was actually executed; disconfirming results are reported, not buried.*
 

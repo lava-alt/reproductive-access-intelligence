@@ -1,4 +1,4 @@
-# Defund War Room — Experiment 1: Findings
+# Reproductive Access Intelligence — Experiment 1: Findings
 
 **Question:** Can a model watching only *point-in-time* leading signals forecast known repro-rights events *before* they happen — with useful lead time and honest calibration?
 

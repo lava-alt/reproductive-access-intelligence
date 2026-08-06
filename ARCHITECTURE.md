@@ -1,4 +1,4 @@
-# Defund War Room — Architecture (v0)
+# Reproductive Access Intelligence — Architecture (v0)
 
 *An always-on wide net. A PP insider already follows the space; this covers what no single human can watch continuously — 50 legislatures + every federal docket + agency registers + affiliate signals, 24/7. Augment bandwidth, don't duplicate the expert.*
 

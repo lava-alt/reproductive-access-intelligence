@@ -1,4 +1,4 @@
-# PP Defund War Room — Monday-Morning Brief
+# Reproductive Access Intelligence — Monday-Morning Brief
 
 *Generated from the live wide net: Federal Register + CourtListener + GovTrack + LegiScan (50-state) + CMS/FDA newsrooms + Google News. Risk numbers from the validated typed model (backtest AUC 0.99); state-lane and news are augmenting signals. This is decision-support for a human who already knows the space — it surfaces what no single person can watch continuously. Bill data © LegiScan LLC (legiscan.com), CC BY 4.0.*
 
