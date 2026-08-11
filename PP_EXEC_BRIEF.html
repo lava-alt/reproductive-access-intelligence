@@ -97,6 +97,14 @@
  .gtrack{flex:1;height:9px;background:#eae2d4;border-radius:5px;overflow:hidden} .gfill{height:100%;border-radius:5px}
  .gapverdict{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-align:center;border:1.5px solid;border-radius:5px;padding:5px 6px}
  .note{font-family:var(--sans);font-size:11.5px;color:var(--slate);margin:12px 2px 0;font-style:italic}
+ /* coordinated campaigns */
+ .camps{padding:8px 22px 18px}
+ .camp{padding:15px 0;border-bottom:1px solid var(--line)}
+ .ctheme{font-family:var(--serif);font-size:16.5px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+ .cmeta{font-family:var(--mono);font-size:11.5px;color:var(--slate);margin:4px 0 8px} .cmeta b{color:var(--alarm)}
+ .cstates{display:flex;flex-wrap:wrap;gap:6px}
+ .scz{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#eef1f7;color:var(--slate)}
+ .scz.nb{background:rgba(196,17,106,.1);color:var(--alarm)}
  /* coverage ribbon */
  .cov{display:flex;flex-wrap:wrap;align-items:center;gap:18px 26px;padding:16px 22px;margin-bottom:6px;
    background:linear-gradient(90deg,rgba(0,40,110,.05),transparent);border-left:5px solid var(--navy);border-radius:10px}
@@ -156,7 +164,7 @@
   <p class="kick">Reproductive Access Intelligence</p>
   <h1>Monday-Morning Threat Brief</h1>
   <p class="sub">The always-on wide net: Federal Register, CourtListener, GovTrack, LegiScan (50-state), CMS and FDA newsrooms, Google News, and a keyless state-court monitor. Risk from the validated typed model (backtest AUC 0.99). Decision-support that surfaces what no single person can watch continuously.</p>
-  <span class="date">Generated 2026-08-10</span>
+  <span class="date">Generated 2026-08-11</span>
 </div></div>
 <div class="xlink"><b class="cur">Desktop view</b> &middot; <a href="https://repro-access-intel-mobile.vercel.app">Mobile version &rsaquo;</a></div>
 
@@ -271,6 +279,11 @@
         </div>
       </div></div>
 
+  <h2>Coordinated campaigns detected</h2>
+  <div class="card camps"><div class="camp"><div class="ctheme">Abortion-inducing drugs</div><div class="cmeta">5 bills across 4 states &middot; <b>3 no-backfill</b></div><div class="cstates"><span class="scz">AZ</span><span class="scz nb">IN</span><span class="scz nb">OK</span><span class="scz nb">SC</span></div></div><div class="camp"><div class="ctheme">Appropriation; DHS; pregnancy resource centers</div><div class="cmeta">5 bills across 4 states &middot; <b>3 no-backfill</b></div><div class="cstates"><span class="scz">AZ</span><span class="scz nb">KY</span><span class="scz nb">SC</span><span class="scz nb">TX</span></div></div><div class="camp"><div class="ctheme">Title X Abortion Provider Prohibition Act</div><div class="cmeta">4 bills across 3 states &middot; <b>2 no-backfill</b></div><div class="cstates"><span class="scz nb">IN</span><span class="scz nb">MS</span><span class="scz">US</span></div></div><div class="camp"><div class="ctheme">New Jersey Born-Alive Abortion Survivors Protection Act</div><div class="cmeta">7 bills across 3 states &middot; <b>1 no-backfill</b></div><div class="cstates"><span class="scz nb">MO</span><span class="scz">NJ</span><span class="scz">US</span></div></div>
+    <p class="note">Near-identical bills moving across multiple states, a coordinated model-bill signal that shows up before any single one advances. Restrictive bills only. No-backfill marks red or rural states where an enactment is pure attrition.</p>
+  </div>
+
   <h2>Signal vs. coverage, what is real but under-covered</h2>
   <div class="card gapcard">
       <div class="gaprow">
@@ -343,6 +356,6 @@
 
   <footer>
     <b>Honest limits an exec should know:</b> news volume is noisy and saturates, so the gap metric is <b>directional, not precise</b>. The keyless state-court feed catches <i>newsworthy</i> rulings but misses routine docket entries (true docket tracking needs a paid API such as Trellis at roughly $70 to $120 per month, or the co-counsel intake in STATE_COURT_SOP.md). Stance detection under-tags some pro-access bills. Trust the corroborated, mechanistic signals, treat single-feed and news-only items as leads to verify.<br><br>
-    Bill data (c) LegiScan LLC (legiscan.com), CC BY 4.0. Independent analysis, not affiliated with or endorsed by Planned Parenthood. Generated 2026-08-10 by the Reproductive Access Intelligence fused tracker.
+    Bill data (c) LegiScan LLC (legiscan.com), CC BY 4.0. Independent analysis, not affiliated with or endorsed by Planned Parenthood. Generated 2026-08-11 by the Reproductive Access Intelligence fused tracker.
   </footer>
 </div></body></html>

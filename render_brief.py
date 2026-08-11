@@ -12,6 +12,7 @@ from datetime import date
 import json, os, html
 import legiscan_ingest as G
 from personhood_audit import verified_personhood_bills
+from copycat_detector import campaigns as _campaigns
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -195,6 +196,23 @@ whats_new = "".join(f"<li>{x}</li>" for x in D["whats_new"])
 watch     = "".join(f"<li>{x}</li>" for x in D["watch"])
 caps      = "".join(f'<div class="cap"><h4>{t}</h4><p>{b}</p></div>' for t,b in D["capabilities"])
 
+# coordinated model-bill campaigns detected live from the LegiScan cache
+def _clean_theme(t):
+    t=(t or "").strip().strip('"\'')
+    for pre in ("Establishes the ","Establishes ","Creates the ","Creating the ","Enacting the ","Relating to "):
+        if t.lower().startswith(pre.lower()): t=t[len(pre):]
+    t=t.strip(' "\'.;')
+    # if the first ;-clause is descriptive keep it, else keep the fuller title
+    first=t.split(";")[0].strip()
+    return e((first if len(first)>=14 else t)[:78])
+camp_html=""
+for c in _campaigns()[:6]:
+    chips="".join(f'<span class="scz{" nb" if s in NO_BACKFILL else ""}">{e(s)}</span>' for s in c["states"])
+    nb=f' &middot; <b>{len(c["no_backfill"])} no-backfill</b>' if c["no_backfill"] else ""
+    camp_html+=(f'<div class="camp"><div class="ctheme">{_clean_theme(c["theme"])}</div>'
+                f'<div class="cmeta">{c["n_bills"]} bills across {c["n_states"]} states{nb}</div>'
+                f'<div class="cstates">{chips}</div></div>')
+
 def build(xlink, force_css):
  return f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -295,6 +313,14 @@ def build(xlink, force_css):
  .gtrack{{flex:1;height:9px;background:#eae2d4;border-radius:5px;overflow:hidden}} .gfill{{height:100%;border-radius:5px}}
  .gapverdict{{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-align:center;border:1.5px solid;border-radius:5px;padding:5px 6px}}
  .note{{font-family:var(--sans);font-size:11.5px;color:var(--slate);margin:12px 2px 0;font-style:italic}}
+ /* coordinated campaigns */
+ .camps{{padding:8px 22px 18px}}
+ .camp{{padding:15px 0;border-bottom:1px solid var(--line)}}
+ .ctheme{{font-family:var(--serif);font-size:16.5px;font-weight:700;color:var(--ink);letter-spacing:-.01em}}
+ .cmeta{{font-family:var(--mono);font-size:11.5px;color:var(--slate);margin:4px 0 8px}} .cmeta b{{color:var(--alarm)}}
+ .cstates{{display:flex;flex-wrap:wrap;gap:6px}}
+ .scz{{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:#eef1f7;color:var(--slate)}}
+ .scz.nb{{background:rgba(196,17,106,.1);color:var(--alarm)}}
  /* coverage ribbon */
  .cov{{display:flex;flex-wrap:wrap;align-items:center;gap:18px 26px;padding:16px 22px;margin-bottom:6px;
    background:linear-gradient(90deg,rgba(0,40,110,.05),transparent);border-left:5px solid var(--navy);border-radius:10px}}
@@ -384,6 +410,11 @@ def build(xlink, force_css):
 
   <h2>Top threats right now</h2>
   <div class="card board">{threat_rows}</div>
+
+  <h2>Coordinated campaigns detected</h2>
+  <div class="card camps">{camp_html}
+    <p class="note">Near-identical bills moving across multiple states, a coordinated model-bill signal that shows up before any single one advances. Restrictive bills only. No-backfill marks red or rural states where an enactment is pure attrition.</p>
+  </div>
 
   <h2>Signal vs. coverage, what is real but under-covered</h2>
   <div class="card gapcard">{gap_rows}
