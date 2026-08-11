@@ -379,7 +379,7 @@ def build(xlink, force_css):
 <div class="mast"><div class="wrap">
   <p class="kick">Reproductive Access Intelligence</p>
   <h1>Monday-Morning Threat Brief</h1>
-  <p class="sub">The always-on wide net: Federal Register, CourtListener, GovTrack, LegiScan (50-state), CMS and FDA newsrooms, Google News, and a keyless state-court monitor. Risk from the validated typed model (backtest AUC 0.99). Decision-support that surfaces what no single person can watch continuously.</p>
+  <p class="sub">The always-on wide net: Federal Register, CourtListener, GovTrack, LegiScan (50-state), CMS and FDA newsrooms, Google News, a keyless state-court monitor, and the OIRA pre-publication reg pipeline (rules under review before they publish). Risk from the validated typed model (backtest AUC 0.99). Decision-support that surfaces what no single person can watch continuously.</p>
   <span class="date">Generated {D["generated"]}</span>
 </div></div>
 {xlink}
