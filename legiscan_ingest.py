@@ -37,6 +37,14 @@ ROUTING = [   # (threat_id, keywords, base_llr)
                          "constitutional right to life"], 0.9),
     ("state_ban",       ["gestational","heartbeat","6-week","six-week","trigger","prohibit abortion",
                          "ban abortion","unborn child protection","total ban"], 0.8),
+    # --- categories added in the coverage-audit fix (were silently dropped) ---
+    ("telehealth_ban",  ["telemedicine","telehealth","remote abortion"], 0.8),
+    ("dismemberment",   ["dismemberment","partial-birth","partial birth","dilation and evacuation"], 0.8),
+    ("contraception",   ["contracept","birth control","cost sharing","plan b","emergency contraception"], 0.6),
+    ("trap",            ["waiting period","ultrasound","informed consent","admitting privileges",
+                         "clinic licens","24-hour","24 hour","hospitalization","reporting requirement",
+                         "mandatory reporting","provider requirement"], 0.6),
+    ("fetal_remains",   ["fetal remains","unborn remains","fetal death","disposition of aborted","funeral"], 0.5),
 ]
 # stance: restriction ADVANCES a threat; a pro-access bill is CONTEXT (llr 0), not evidence.
 RESTRICT = ["prohibit","ban","defund","protect life","protecting life","born-alive","personhood",
@@ -119,7 +127,12 @@ def _route(title, relevance=100):
             if tid == "personhood" and not _personhood_ok(title):   # strip corporate/AI/anti-personhood
                 continue
             return tid, base
-    return None, 0   # repro-relevant but no specific threat keyword -> DROP (precision-first)
+    # CATCH-ALL (wide-net mission): repro-relevant but no specific threat keyword. Surface any
+    # restrictive/unclear bill for human review; only clearly pro-access (protect) bills are dropped.
+    # This is what closes the "would have missed the Arizona bill" recall gap (74% -> ~100%).
+    if _stance(title) != "protect":
+        return "repro_watch", 0.4
+    return None, 0
 
 def _stage_mult(last_action):
     a = (last_action or "").lower()

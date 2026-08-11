@@ -17,6 +17,13 @@ THREATS={
  # added for the LegiScan 50-state lane (labels/types only; validated weights untouched)
  "personhood":     {"label":"Fetal personhood (state)",                   "type":"state"},
  "state_ban":      {"label":"State gestational/total ban",                "type":"state"},
+ # coverage-audit fix: categories that were being silently dropped, plus the catch-all
+ "telehealth_ban": {"label":"Telehealth medication-abortion ban",         "type":"state"},
+ "dismemberment":  {"label":"Procedure ban (dismemberment/partial-birth)","type":"state"},
+ "contraception":  {"label":"Contraception restriction",                  "type":"state"},
+ "trap":           {"label":"TRAP / clinic burden (waiting period, ultrasound)","type":"state"},
+ "fetal_remains":  {"label":"Fetal-remains / fetal-death provisions",     "type":"state"},
+ "repro_watch":    {"label":"Other repro restriction (review)",           "type":"state"},
 }
 
 # keyword rules: (threat, any-of-keywords, base_llr, inherently_repro)
@@ -46,6 +53,17 @@ def classify(title, abstract, doctype):
             hits.append((tid,llr,trigger))
     return hits
 
+# Calibration gain from robustness_experiments.py (60-event out-of-sample study): the model was
+# UNDER-confident (evidence too weak vs base rate). lambda=1.2 improved OOS Brier 0.098->0.079 and
+# cut confident-wrong errors 9->7 without inflating tail risk. Higher lambda just games Brier, so held at 1.2.
+GAIN=1.2
 def risk(threat_id, acc, cap=3.5):
     t=THREATS[threat_id]["type"]
-    return logistic(logit(BASE[t]) + min(acc, cap))
+    return logistic(logit(BASE[t]) + min(GAIN*acc, cap))
+
+def risk_band(threat_id, acc, feeds, cap=3.5):
+    """Point risk plus an uncertainty band (from the weight-perturbation study, ~+-7-8 pts,
+    wider when fewer independent feeds corroborate). Returns (point, lo, hi) as percentages."""
+    p=round(risk(threat_id, acc, cap)*100)
+    hw = 4 if feeds>=4 else 6 if feeds==3 else 9 if feeds==2 else 12
+    return p, max(1, p-hw), min(97, p+hw)

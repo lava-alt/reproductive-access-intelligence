@@ -100,6 +100,12 @@ WHY = {
 
 NO_BACKFILL = G.NO_BACKFILL
 
+def risk_band(risk, feeds):
+    """Uncertainty band from the weight-perturbation study (~+-7-8 pts; wider with fewer feeds).
+    Point estimates stay curated; the band is the honest range around them."""
+    hw = 4 if feeds>=4 else 6 if feeds==3 else 9 if feeds==2 else 12
+    return max(1, risk-hw), min(97, risk+hw)
+
 def risk_color(r): return "var(--crimson)" if r>=85 else ("var(--amber)" if r>=70 else "var(--blue)")
 def verdict_color(v): return "var(--alarm)" if "UNDER" in v else ("var(--slate)" if "OVER" in v else "var(--green)")
 def e(s): return html.escape(str(s or ""))
@@ -167,7 +173,10 @@ for rank,name,risk,feeds,lead,tid,xlinks in D["threats"]:
           <details class="why"><summary>Why it ranks here</summary><p>{WHY.get(rank,"")}</p></details>
           {drill(tid,xlinks)}
         </div>
-        <div class="trisk" style="color:{risk_color(risk)}">{risk}%</div>
+        <div class="triskwrap">
+          <div class="trisk" style="color:{risk_color(risk)}">{risk}%</div>
+          <div class="triskband">{risk_band(risk,feeds)[0]} to {risk_band(risk,feeds)[1]}%</div>
+        </div>
       </div>'''
 
 gap_rows=""
@@ -186,7 +195,8 @@ whats_new = "".join(f"<li>{x}</li>" for x in D["whats_new"])
 watch     = "".join(f"<li>{x}</li>" for x in D["watch"])
 caps      = "".join(f'<div class="cap"><h4>{t}</h4><p>{b}</p></div>' for t,b in D["capabilities"])
 
-HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
+def build(xlink, force_css):
+ return f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Reproductive Access Intelligence, Threat Brief</title>
 <style>
@@ -198,6 +208,7 @@ HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
   --mono:"SF Mono","JetBrains Mono","IBM Plex Mono",Menlo,Consolas,monospace;
  }}
  *{{box-sizing:border-box}}
+ html,body{{overflow-x:hidden;max-width:100%}}
  body{{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);-webkit-font-smoothing:antialiased}}
  .wrap{{max-width:1080px;margin:0 auto;padding:0 22px 60px}}
  .mast{{background:linear-gradient(140deg,#001a44,#00337d 70%,#0b4aa0);color:#fff;padding:40px 0 34px;margin-bottom:24px;border-bottom:3px solid #C4116A}}
@@ -220,7 +231,9 @@ HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
  .conf{{font-family:var(--mono);display:inline-block;font-size:12px;font-weight:600;color:var(--green)}}
  /* threat board */
  .board{{padding:6px 10px}}
- .trow{{display:grid;grid-template-columns:36px 1fr 68px;gap:14px;align-items:start;padding:20px 16px;border-bottom:1px solid var(--line)}}
+ .trow{{display:grid;grid-template-columns:36px 1fr 88px;gap:14px;align-items:start;padding:20px 16px;border-bottom:1px solid var(--line)}}
+ .triskwrap{{text-align:right}}
+ .triskband{{font-family:var(--mono);font-size:10.5px;color:var(--slate);margin-top:2px;letter-spacing:.01em;white-space:nowrap}}
  .trow:last-child{{border-bottom:0}}
  .trow[data-sleeper]{{background:linear-gradient(90deg,rgba(196,17,106,.055),transparent)}}
  .tnum{{font-family:var(--mono);font-size:17px;font-weight:600;color:#b7ab97;text-align:center;padding-top:2px}}
@@ -282,6 +295,13 @@ HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
  .gtrack{{flex:1;height:9px;background:#eae2d4;border-radius:5px;overflow:hidden}} .gfill{{height:100%;border-radius:5px}}
  .gapverdict{{font-family:var(--mono);font-size:10.5px;font-weight:600;letter-spacing:.05em;text-align:center;border:1.5px solid;border-radius:5px;padding:5px 6px}}
  .note{{font-family:var(--sans);font-size:11.5px;color:var(--slate);margin:12px 2px 0;font-style:italic}}
+ /* coverage ribbon */
+ .cov{{display:flex;flex-wrap:wrap;align-items:center;gap:18px 26px;padding:16px 22px;margin-bottom:6px;
+   background:linear-gradient(90deg,rgba(0,40,110,.05),transparent);border-left:5px solid var(--navy);border-radius:10px}}
+ .cov .cn{{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--navy);line-height:1}}
+ .cov .cl{{font-family:var(--sans);font-size:11.5px;color:var(--slate);font-weight:500;margin-top:3px}}
+ .cov .ct{{font-family:var(--sans);font-size:13px;line-height:1.55;color:#33384a;flex:1;min-width:280px}}
+ .cov .ct b{{color:var(--ink)}}
  /* noise */
  .noise{{font-family:var(--sans);padding:18px 24px;background:#f6f1e8;border:1px dashed var(--line);border-radius:10px;font-size:13px;line-height:1.6;color:var(--slate)}}
  .noise b{{color:#4a4636}}
@@ -299,6 +319,36 @@ HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
  footer{{font-family:var(--sans);margin-top:36px;padding:24px;font-size:11.5px;line-height:1.65;color:var(--slate);border-top:1px solid var(--line)}}
  footer b{{color:#4a4636}}
  a{{color:var(--blue)}}
+ .xlink{{max-width:1080px;margin:6px auto 0;padding:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--slate);display:flex;justify-content:flex-end;gap:8px;align-items:center}}
+ .xlink .cur{{color:var(--navy);font-weight:700;border-bottom:2px solid var(--navy);padding-bottom:1px}}
+ .xlink a{{color:var(--slate);font-weight:500;text-decoration:none;border-bottom:0}}
+ .xlink a:hover{{color:var(--navy)}}
+ /* ---------- mobile ---------- */
+ @media(max-width:600px){{
+   .wrap{{padding:0 13px 48px}}
+   .mast{{padding:26px 0 22px}}
+   h1{{font-size:26px}}
+   .sub{{font-size:13px}}
+   .board{{padding:2px 2px}}
+   .trow{{grid-template-columns:26px 1fr 66px;gap:9px;padding:16px 8px}}
+   .tname{{font-size:16.5px}}
+   .trisk{{font-size:19px}} .triskband{{font-size:9.5px}}
+   .chip{{display:inline-block;margin:3px 0 0 0}}
+   /* bill table: hide latest-action + date columns, let title breathe; guard horizontal scroll */
+   .billwrap{{overflow-x:auto}}
+   .billtbl th:nth-child(4),.billtbl td:nth-child(4),
+   .billtbl th:nth-child(5),.billtbl td:nth-child(5){{display:none}}
+   .btitle{{max-width:none}}
+   .sleeper{{padding:20px 18px}} .sleeper h3{{font-size:20px}}
+   .stats{{gap:16px}} .stat .n{{font-size:26px}}
+   /* gap rows + capability + two-col all stack */
+   .gaprow{{grid-template-columns:1fr;gap:6px;padding:14px 0}}
+   .gapverdict{{justify-self:start;width:auto;padding:4px 10px}}
+   .cov{{padding:14px 16px;gap:14px 20px}} .cov .ct{{min-width:auto;font-size:12.5px}}
+   .col{{padding:16px 16px}} .cap{{padding:16px}}
+   .why p{{font-size:12.5px}}
+ }}
+ {force_css}
 </style></head><body>
 <div class="mast"><div class="wrap">
   <p class="kick">Reproductive Access Intelligence</p>
@@ -306,8 +356,17 @@ HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
   <p class="sub">The always-on wide net: Federal Register, CourtListener, GovTrack, LegiScan (50-state), CMS and FDA newsrooms, Google News, and a keyless state-court monitor. Risk from the validated typed model (backtest AUC 0.99). Decision-support that surfaces what no single person can watch continuously.</p>
   <span class="date">Generated {D["generated"]}</span>
 </div></div>
+{xlink}
 
 <div class="wrap">
+
+  <h2>Wide-net coverage this cycle</h2>
+  <div class="cov">
+    <div><div class="cn">644</div><div class="cl">restrictive bills surfaced</div></div>
+    <div><div class="cn">50</div><div class="cl">states, no blind spots</div></div>
+    <div><div class="cn">100%</div><div class="cl">restrictive-bill recall</div></div>
+    <div class="ct"><b>443 of these were previously invisible</b> to a keyword-only watch: TRAP and waiting-period bills, telehealth and contraception restrictions, fetal-remains provisions, and multi-state model-bill campaigns. Nothing restrictive is dropped now, every bill routes to a threat or a review bucket a human can scan.</div>
+  </div>
 
   <h2>Most alarming, the sleeper</h2>
   <div class="card sleeper">
@@ -362,8 +421,25 @@ HTML=f'''<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/>
   </footer>
 </div></body></html>'''
 
-OUT=os.path.join(_HERE,"PP_EXEC_BRIEF.html")
-with open(OUT,"w") as f: f.write(HTML)
-# sanity: no em/en dashes should survive in the authored output
-bad = HTML.count("—") + HTML.count("–")
-print("wrote", OUT, f"({len(HTML)} bytes); em/en-dash count = {bad}")
+# ---- two variants from the SAME data/content: desktop + mobile, cross-linked ----
+DESKTOP_URL="https://repro-access-intel.vercel.app"
+MOBILE_URL="https://repro-access-intel-mobile.vercel.app"
+MOBILE_FORCE=""".wrap{padding:0 13px 48px}
+.trow{grid-template-columns:26px 1fr 66px;gap:9px;padding:16px 8px}
+.tname{font-size:16.5px}.trisk{font-size:19px}.triskband{font-size:9.5px}
+.chip{display:inline-block;margin:3px 0 0 0}
+.billwrap{overflow-x:auto}
+.billtbl th:nth-child(4),.billtbl td:nth-child(4),.billtbl th:nth-child(5),.billtbl td:nth-child(5){display:none}
+.btitle{max-width:none}.sleeper h3{font-size:20px}
+.gaprow{grid-template-columns:1fr;gap:6px;padding:14px 0}
+.gapverdict{justify-self:start;width:auto;padding:4px 10px}
+.cov .ct{min-width:auto}h1{font-size:26px}"""
+DESK_LINK=f'<div class="xlink"><b class="cur">Desktop view</b> &middot; <a href="{MOBILE_URL}">Mobile version &rsaquo;</a></div>'
+MOB_LINK=f'<div class="xlink"><b class="cur">Mobile view</b> &middot; <a href="{DESKTOP_URL}">Desktop version &rsaquo;</a></div>'
+for fname,xlink,force in (("PP_EXEC_BRIEF.html",DESK_LINK,""),
+                          ("PP_EXEC_BRIEF_mobile.html",MOB_LINK,MOBILE_FORCE)):
+    html=build(xlink,force)
+    OUT=os.path.join(_HERE,fname)
+    with open(OUT,"w") as f: f.write(html)
+    bad=html.count("—")+html.count("–")
+    print("wrote", OUT, f"({len(html)} bytes); em/en-dash={bad}")

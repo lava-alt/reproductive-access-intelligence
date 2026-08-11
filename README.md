@@ -1,6 +1,7 @@
 # Reproductive Access Intelligence
 
-**[Live tracker → repro-access-intel.vercel.app](https://repro-access-intel.vercel.app)**
+**Live tracker** (same data, pick your screen):
+[Desktop view](https://repro-access-intel.vercel.app) · [Mobile view](https://repro-access-intel-mobile.vercel.app)
 
 **An always-on reproductive-access threat tracker** that fuses 50-state legislation, federal courts,
 and agency actions into one evergreen early-warning feed — with a calibrated risk model under the
