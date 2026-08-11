@@ -24,6 +24,7 @@ from legiscan_ingest import legiscan_summary
 from feeds_news import news_signals
 from feeds_statecourt import fetch_statecourt
 from feeds_oira import oira_signals
+from feeds_whitehouse import whitehouse_signals
 
 UA = {"User-Agent": "warroom/1.0 (repro early-warning; research)"}
 SINCE = "2025-01-01"
@@ -79,8 +80,8 @@ def fetch_federal_register():
 # --- fuse all feeds ---
 def run():
     print("=" * 92)
-    print("WAR ROOM v3 — WIDE NET  (8 keyless feeds, one fused two-lane digest)")
-    print("  FederalRegister · CourtListener(search+watchlist) · GovTrack · LegiScan(50-state) · CMS/FDA · DOJ · News · OIRA(pre-pub)")
+    print("WAR ROOM v3 — WIDE NET  (9 keyless feeds, one fused two-lane digest)")
+    print("  FederalRegister · CourtListener(search+watchlist) · GovTrack · LegiScan(50-state) · CMS/FDA · DOJ · News · OIRA(pre-pub) · WhiteHouse(PRES)")
     print("=" * 92)
     fr = fetch_federal_register()
     court = fetch_courtlistener()
@@ -93,10 +94,12 @@ def run():
     news = news_signals()                  # context only (llr 0), a story can precede the action
     try: oira = oira_signals()             # OIRA pre-publication reg pipeline (earlier than the FR)
     except Exception: oira = []
-    all_sigs = fr + court + watch + bills + legiscan + agency + doj + statecourt + news + oira
+    try: wh = whitehouse_signals()         # presidential EOs/memos/proclamations (unilateral executive vector)
+    except Exception: wh = []
+    all_sigs = fr + court + watch + bills + legiscan + agency + doj + statecourt + news + oira + wh
     print(f"signals: FR={len(fr)}  Court={len(court)}  Watchlist={len(watch)}  FedBills={len(bills)}  "
           f"LegiScan={len(legiscan)}  Agency={len(agency)}  DOJ={len(doj)}  StateCourt={len(statecourt)}  "
-          f"News={len(news)}  OIRA={len(oira)}  total={len(all_sigs)}\n")
+          f"News={len(news)}  OIRA={len(oira)}  WhiteHouse={len(wh)}  total={len(all_sigs)}\n")
 
     acc = {k: 0.0 for k in THREATS}
     feeds_by_threat = {k: set() for k in THREATS}
