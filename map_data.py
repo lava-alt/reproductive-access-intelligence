@@ -21,6 +21,14 @@ KEY_ISSUES=[
  ("comstock",       "Comstock / mailed-pill ban",         "#2895D5"),
 ]
 
+# pro-access titles that _stance mislabels as "restrict" because they contain "prohibit"
+# (e.g. "prohibits hospital interference with patient care" is PRO-access). The map is a strong
+# visual claim, so these are hard-excluded so a blue state never glows as a threat by mistake.
+PROACCESS_MAP=["interference with patient care","hospital interference","secures protection",
+ "protections for patients and providers","search warrant","shield law","right to abortion",
+ "access to abortion","reproductive freedom","safeguarding reproductive","freedom of reproductive",
+ "protecting reproductive","protect reproductive"]
+
 def _stage(last_action):
     a=(last_action or "").lower()
     if any(w in a for w in ["signed","enacted","chapter","public act","effective"]): return "enacted"
@@ -39,6 +47,7 @@ def build():
         # MAP PRECISION: only restrictive-direction bills glow (a map is a strong visual claim;
         # pro-access bills in blue states must never paint them as threats).
         if tid is None or G._stance(title)!="restrict": continue
+        if any(p in title.lower() for p in PROACCESS_MAP): continue   # drop pro-access mislabels
         per[tid][st].append(dict(bill=r.get("bill_number",""), title=title[:90],
                                  url=r.get("url",""), date=r.get("last_action_date",""),
                                  stage=_stage(r.get("last_action","")),

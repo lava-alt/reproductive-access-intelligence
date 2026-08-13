@@ -23,11 +23,21 @@ def load_bills_by_threat():
         rows = json.load(open(os.path.join(_HERE, ".legiscan_data.json")))
     except Exception:
         return {}
+    from map_data import PROACCESS_MAP
     by = defaultdict(list)
     for r in rows.values():
-        tid, _ = G._route(r.get("title", ""), r.get("relevance", 100))
-        if tid:
-            by[tid].append(r)
+        title = r.get("title", "")
+        tid, _ = G._route(title, r.get("relevance", 100))
+        if not tid:
+            continue
+        # ACCURACY: the per-threat drill-downs shown to execs must be RESTRICTIVE only. Drop
+        # pro-access bills that _stance mislabels (HI "stockpile mifepristone", CA "emergency
+        # preparedness", NY "hospital interference") so a threat drawer never lists a pro-access bill.
+        if G._stance(title) != "restrict":
+            continue
+        if any(p in title.lower() for p in PROACCESS_MAP):
+            continue
+        by[tid].append(r)
     # personhood drawer reads from the HAND-AUDITED verified set (the same 42 the hero cites),
     # not the ordered router (which sends 13 dual-keyword bills to earlier threats). Headline
     # count and drawer count now agree exactly, no asterisk.
@@ -43,16 +53,16 @@ D = {
  # (rank, name, risk%, feeds, lead, threat_id-for-drilldown, extra source links [(label,url)])
  "threats": [
    (1,"FDA mifepristone / REMS re-tightening",93,4,
-    "Louisiana and AHM litigation, 73 state bills across 22 states, 8 federal bills. Highest-confidence threat in the system.",
+    "Louisiana and AHM litigation, 37 restrictive state bills across 15 states, plus federal bills. Highest-confidence threat in the system.",
     "fda_mife",[("CourtListener: State of Louisiana v. FDA","https://www.courtlistener.com/?q=Louisiana+v+FDA")]),
    (2,"EMTALA emergency-abortion rollback",93,3,
-    "Federal Register guidance rescission already published, plus 37 state bills. Realized and still active.",
+    "Federal Register guidance rescission already published, plus 18 restrictive state bills. Realized and still active.",
     "emtala",[("Federal Register: HHS EMTALA guidance","https://www.federalregister.gov/agencies/health-and-human-services-department")]),
    (3,"State Medicaid exclusion (post-Medina)",89,3,
-    "Medina decided, 34 state bills across 14 states (11 no-backfill). The permanent-precedent cascade.",
+    "Medina decided, 27 restrictive state bills across 14 states. The permanent-precedent cascade.",
     "state_exclusion",[("CourtListener: Medina v. PP South Atlantic","https://www.courtlistener.com/?q=Medina+Planned+Parenthood")]),
    (4,"Comstock / mailed-pill ban",76,1,
-    "Rising via state mailing-ban bills (13 bills, 6 states) plus a federal Ban Abortion by Mail Act. Not yet a headline threat.",
+    "Rising via state mailing-ban bills (7 bills, 4 states) plus a federal Ban Abortion by Mail Act. Not yet a headline threat.",
     "comstock",[]),
    (5,"Fetal personhood (state)",65,1,
     "42 verified bills across 21 states, 26 of them in no-backfill states. The sleeper (see alert). Every one of the 42 is browsable below.",
@@ -388,7 +398,7 @@ def build(xlink, force_css):
 
   <h2>Wide-net coverage this cycle</h2>
   <div class="cov">
-    <div><div class="cn">644</div><div class="cl">restrictive bills surfaced</div></div>
+    <div><div class="cn">644</div><div class="cl">repro-relevant bills surfaced</div></div>
     <div><div class="cn">50</div><div class="cl">states, no blind spots</div></div>
     <div><div class="cn">100%</div><div class="cl">restrictive-bill recall</div></div>
     <div class="ct"><b>443 of these were previously invisible</b> to a keyword-only watch: TRAP and waiting-period bills, telehealth and contraception restrictions, fetal-remains provisions, and multi-state model-bill campaigns. Nothing restrictive is dropped now, every bill routes to a threat or a review bucket a human can scan.</div>
