@@ -465,8 +465,9 @@ MOBILE_FORCE=""".wrap{padding:0 13px 48px}
 .gaprow{grid-template-columns:1fr;gap:6px;padding:14px 0}
 .gapverdict{justify-self:start;width:auto;padding:4px 10px}
 .cov .ct{min-width:auto}h1{font-size:26px}"""
-DESK_LINK=f'<div class="xlink"><b class="cur">Desktop view</b> &middot; <a href="{MOBILE_URL}">Mobile version &rsaquo;</a></div>'
-MOB_LINK=f'<div class="xlink"><b class="cur">Mobile view</b> &middot; <a href="{DESKTOP_URL}">Desktop version &rsaquo;</a></div>'
+MAP_URL="https://repro-access-intel.vercel.app/map.html"
+DESK_LINK=f'<div class="xlink"><b class="cur">Desktop view</b> &middot; <a href="{MOBILE_URL}">Mobile version &rsaquo;</a> &middot; <a href="{MAP_URL}">Map view &rsaquo;</a></div>'
+MOB_LINK=f'<div class="xlink"><b class="cur">Mobile view</b> &middot; <a href="{DESKTOP_URL}">Desktop version &rsaquo;</a> &middot; <a href="{MAP_URL}">Map view &rsaquo;</a></div>'
 for fname,xlink,force in (("PP_EXEC_BRIEF.html",DESK_LINK,""),
                           ("PP_EXEC_BRIEF_mobile.html",MOB_LINK,MOBILE_FORCE)):
     html=build(xlink,force)
