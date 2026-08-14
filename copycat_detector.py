@@ -11,6 +11,7 @@ Bill data (c) LegiScan LLC (legiscan.com), CC BY 4.0.
 import json, os, re
 from collections import defaultdict
 import legiscan_ingest as G
+from stance_gate import restrictive as is_restrictive   # WIRED: LLM verifier (cached) + keyword fallback
 
 rows=json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),".legiscan_data.json")))
 NB=G.NO_BACKFILL
@@ -36,7 +37,10 @@ def campaigns(min_states=3, thresh=0.5):
     seen=set(); bills=[]
     for r in rows.values():
         t=r.get('title','')
-        if not repro(t) or G._stance(t)=='protect': continue
+        # SHARED GATE (plumbing fix): only bills the system-wide stance gate confirms restrictive are
+        # eligible to cluster. One definition of "restrictive" everywhere (map, brief, campaigns) — no
+        # more restrictive-on-map-but-absent-from-campaigns, and protective/neutral bills can't leak in.
+        if not repro(t) or not is_restrictive(t): continue
         key=(r.get('state'),r.get('bill_number'))
         if key in seen: continue
         seen.add(key)

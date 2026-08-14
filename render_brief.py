@@ -23,19 +23,16 @@ def load_bills_by_threat():
         rows = json.load(open(os.path.join(_HERE, ".legiscan_data.json")))
     except Exception:
         return {}
-    from map_data import PROACCESS_MAP
+    from stance_gate import restrictive as is_restrictive   # WIRED: LLM verifier (cached) + keyword fallback
     by = defaultdict(list)
     for r in rows.values():
         title = r.get("title", "")
-        tid, _ = G._route(title, r.get("relevance", 100))
+        tid, _ = G._route(title, r.get("relevance", 100))   # Stage 1: repro-relevant + routable
         if not tid:
             continue
-        # ACCURACY: the per-threat drill-downs shown to execs must be RESTRICTIVE only. Drop
-        # pro-access bills that _stance mislabels (HI "stockpile mifepristone", CA "emergency
-        # preparedness", NY "hospital interference") so a threat drawer never lists a pro-access bill.
-        if G._stance(title) != "restrict":
-            continue
-        if any(p in title.lower() for p in PROACCESS_MAP):
+        # Stage 2: negation-aware directional verifier. A threat drawer never lists a pro-access
+        # bill (HI "stockpile mifepristone", NY "prohibits hospital interference"). See stance_gate.
+        if not is_restrictive(title):
             continue
         by[tid].append(r)
     # personhood drawer reads from the HAND-AUDITED verified set (the same 42 the hero cites),

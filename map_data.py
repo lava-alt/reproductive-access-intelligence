@@ -8,6 +8,7 @@ Bill data (c) LegiScan LLC (legiscan.com), CC BY 4.0.
 import json, os
 from collections import defaultdict
 import legiscan_ingest as G
+from stance_gate import restrictive as is_restrictive   # WIRED: LLM verifier (cached) + keyword fallback
 
 _HERE=os.path.dirname(os.path.abspath(__file__))
 
@@ -46,8 +47,8 @@ def build():
         tid,_=G._route(title, r.get("relevance",100))
         # MAP PRECISION: only restrictive-direction bills glow (a map is a strong visual claim;
         # pro-access bills in blue states must never paint them as threats).
-        if tid is None or G._stance(title)!="restrict": continue
-        if any(p in title.lower() for p in PROACCESS_MAP): continue   # drop pro-access mislabels
+        if tid is None: continue                             # Stage 1: repro-relevant + routable
+        if not is_restrictive(title): continue               # Stage 2: negation-aware directional verifier
         per[tid][st].append(dict(bill=r.get("bill_number",""), title=title[:90],
                                  url=r.get("url",""), date=r.get("last_action_date",""),
                                  stage=_stage(r.get("last_action","")),

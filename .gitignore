@@ -10,3 +10,14 @@ __pycache__/
 # terms. Download separately; analyze_ces.py and analyze_ces_multiyear.py expect them here.
 *.csv
 ces*.tab
+
+# Anthropic API key (LLM stance verifier) — never commit
+.anthropic_key
+*.apikey
+
+# LLM verdict cache — derived data, keeps API cost in the cents/week band; rebuildable
+.stance_cache.json
+
+# full bill text cache (large, rebuildable from LegiScan) — not for the public repo
+.billtext/
+campaign_engine/.sample.json
