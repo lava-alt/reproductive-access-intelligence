@@ -99,8 +99,8 @@ def render():
     <div class="panel" id="panel"><div class="hint">Pick an issue above, then click a glowing state to see the bills moving there.</div></div>
   </div>
 </div>
-<script src="d3.min.js"></script>
-<script src="topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script>
 const SNAPS={SNAPS}, FIPS={FIPSJSON}, US={TOPO};
 const STAGEW={{enacted:1.0,passed:0.72,committee:0.48,introduced:0.28}};

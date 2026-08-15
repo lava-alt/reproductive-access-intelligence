@@ -38,31 +38,66 @@ def load_bills_by_threat():
     # personhood drawer reads from the HAND-AUDITED verified set (the same 42 the hero cites),
     # not the ordered router (which sends 13 dual-keyword bills to earlier threats). Headline
     # count and drawer count now agree exactly, no asterisk.
-    by["personhood"] = verified_personhood_bills()
+    # personhood drawer: hand-audited fetal-personhood set, THEN through the LLM verifier at the
+    # HIGHER-REASONING config (chain-of-thought + self-consistency n=3). This drawer is uniquely
+    # ambiguous -- "unborn child tax credit", "child support for unborn children", wrongful-death,
+    # fetal-homicide, and repeals ALL contain "unborn", so the fast zeroshot config (and the keyword
+    # gate) over-tag them. CoT reasons about whether each actually restricts ABORTION ACCESS and
+    # correctly drops the tax/tort/child-support/repeal/exception bills while keeping real
+    # abolish-abortion and personhood bans. Cache warmed offline; a miss -> excluded (precision-first).
+    import stance_llm as _L
+    by["personhood"] = [r for r in verified_personhood_bills()
+                        if _L.cached_verdict(r.get("title", ""), style="cot", n=3) == "restrictive"]
+    # dedup across buckets: personhood is the authoritative hand-audited set, so a bill counted there
+    # (e.g. OK HB3038 Abolition-of-Abortion Act) is removed from every other threat bucket -> no bill
+    # is double-counted, and the aggregate totals can't be padded.
+    ph_keys = {(r.get("state"), r.get("bill_number")) for r in by["personhood"]}
+    for tid in list(by):
+        if tid == "personhood":
+            continue
+        by[tid] = [r for r in by[tid] if (r.get("state"), r.get("bill_number")) not in ph_keys]
     for tid in by:
         by[tid].sort(key=lambda r: (r.get("state", ""), r.get("bill_number", "")))
     return by
 
 BILLS = load_bills_by_threat()
 
+def _threat_counts(tid):
+    """State-bill count + distinct states for a threat bucket (excludes federal US rows), so the
+    lead sentences self-correct and always match the drawer."""
+    b = BILLS.get(tid, [])
+    st = [r for r in b if len(r.get("state", "")) == 2 and r.get("state") != "US"]
+    return len(st), len({r.get("state") for r in st})
+
+MIFE_N, MIFE_S = _threat_counts("fda_mife")
+EMT_N,  EMT_S  = _threat_counts("emtala")
+EXCL_N, EXCL_S = _threat_counts("state_exclusion")
+COM_N,  COM_S  = _threat_counts("comstock")
+
+# personhood headline numbers computed from the gated drawer, so hero + stat card + lead always agree
+_PH = BILLS.get("personhood", [])
+PH_N = len(_PH)
+PH_STATES = len({r.get("state") for r in _PH if len(r.get("state", "")) == 2})
+PH_NB = sum(1 for r in _PH if r.get("state") in G.NO_BACKFILL)
+
 D = {
  "generated": date.today().isoformat(),
  # (rank, name, risk%, feeds, lead, threat_id-for-drilldown, extra source links [(label,url)])
  "threats": [
    (1,"FDA mifepristone / REMS re-tightening",93,4,
-    "Louisiana and AHM litigation, 37 restrictive state bills across 15 states, plus federal bills. Highest-confidence threat in the system.",
+    f"Louisiana and AHM litigation, {MIFE_N} restrictive state bills across {MIFE_S} states, plus federal bills. Highest-confidence threat in the system.",
     "fda_mife",[("CourtListener: State of Louisiana v. FDA","https://www.courtlistener.com/?q=Louisiana+v+FDA")]),
-   (2,"EMTALA emergency-abortion rollback",93,3,
-    "Federal Register guidance rescission already published, plus 18 restrictive state bills. Realized and still active.",
+   (2,"EMTALA rollback and born-alive mandates",93,3,
+    f"Federal Register guidance rescission already published, plus {EMT_N} born-alive and abortion-limitation state bills. Realized and still active.",
     "emtala",[("Federal Register: HHS EMTALA guidance","https://www.federalregister.gov/agencies/health-and-human-services-department")]),
    (3,"State Medicaid exclusion (post-Medina)",89,3,
-    "Medina decided, 27 restrictive state bills across 14 states. The permanent-precedent cascade.",
+    f"Medina decided, {EXCL_N} restrictive state bills across {EXCL_S} states. The permanent-precedent cascade.",
     "state_exclusion",[("CourtListener: Medina v. PP South Atlantic","https://www.courtlistener.com/?q=Medina+Planned+Parenthood")]),
    (4,"Comstock / mailed-pill ban",76,1,
-    "Rising via state mailing-ban bills (7 bills, 4 states) plus a federal Ban Abortion by Mail Act. Not yet a headline threat.",
+    f"Rising via state mailing-ban bills ({COM_N} bills, {COM_S} states) plus a federal Ban Abortion by Mail Act. Not yet a headline threat.",
     "comstock",[]),
    (5,"Fetal personhood (state)",65,1,
-    "42 verified bills across 21 states, 26 of them in no-backfill states. The sleeper (see alert). Every one of the 42 is browsable below.",
+    f"{PH_N} verified bills across {PH_STATES} states, {PH_NB} of them in no-backfill states. The sleeper (see alert). Every one is browsable below.",
     "personhood",[]),
    (6,"Federal Medicaid defund (Section 71113 re-pass)",47,2,
     "CourtWatch (PPFA v. Kennedy) plus GovTrack (S.203 Defund PP Act). Long lead, seeded at bill introduction.",
@@ -78,7 +113,7 @@ D = {
  ],
  "whats_new": [
    "<b>Copycat model-bill campaigns</b> detected across states, visible <i>before</i> any single bill advances: an Abortion-inducing Drugs and Reports bill cloned in <b>AZ, IN, OK, SC</b>, and a Born-Alive Survivors Protection Act in <b>MO, NJ, and federal</b>.",
-   "<b>Comstock is escalating through the state mailing-ban route.</b> 13 bills (some enacted in no-backfill states) plus a federal Ban Abortion by Mail Act. The mailed-pill lifeline is being targeted <i>legislatively</i>, not just in court.",
+   f"<b>Comstock is escalating through the state mailing-ban route.</b> {COM_N} bills ({COM_S} states, some enacted in no-backfill states) plus a federal Ban Abortion by Mail Act. The mailed-pill lifeline is being targeted <i>legislatively</i>, not just in court.",
    "<b>Enacted this session in no-backfill states:</b> SD abortion-drug distribution ban (Mar 30), IA abortion bill, TX PP logistical-support exclusion (effective 9/1/25), TN personhood provision (effective 4/23/26).",
    "<b>Legislative velocity peaked Jan through Mar 2026</b> (41, then 27, then 22 repro bills per month). The 2026 session is the active window.",
  ],
@@ -407,9 +442,9 @@ def build(xlink, force_css):
     <h3>Fetal personhood is moving fast across the states, with almost no national press.</h3>
     <p>The signal-vs-coverage gap flags personhood as the <b>#1 under-covered threat</b>. Real legislative activity is high, media coverage the <b>lowest</b> of anything we track (66 articles versus mifepristone's 99, not an artifact). It is the movement's constitutional endgame (it threatens abortion, IVF, <i>and</i> contraception at once, regardless of ballot outcomes) and it advances incrementally, embedded in non-abortion bills, exactly what a headline-driven watch misses. No one is sounding the alarm because nothing has happened yet. That is when an early-warning tool earns its keep.</p>
     <div class="stats">
-      <div class="stat"><div class="n">42</div><div class="l">verified fetal-personhood bills</div></div>
-      <div class="stat"><div class="n">21</div><div class="l">states</div></div>
-      <div class="stat"><div class="n">26</div><div class="l">bills in no-backfill red or rural states</div></div>
+      <div class="stat"><div class="n">{PH_N}</div><div class="l">verified fetal-personhood bills</div></div>
+      <div class="stat"><div class="n">{PH_STATES}</div><div class="l">states</div></div>
+      <div class="stat"><div class="n">{PH_NB}</div><div class="l">bills in no-backfill red or rural states</div></div>
       <div class="stat"><div class="n">+0.45</div><div class="l">signal-vs-coverage gap</div></div>
     </div>
     <p style="margin-top:16px;font-size:13px;color:var(--slate)">Independently corroborated by Guttmacher (16 states, 40+ bills) and Pregnancy Justice / Legal Voice (24 states with personhood language). Audit precision 0.81. Confidence: <span class="conf">MEDIUM-HIGH</span></p>
